@@ -129,3 +129,9 @@ detection/visual/
 trash/
 setr/
 swin/
+
+data/
+checkpoints/
+pretrained/
+
+segmentation/ops
