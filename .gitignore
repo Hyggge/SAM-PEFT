@@ -135,3 +135,6 @@ checkpoints/
 pretrained/
 
 segmentation/ops
+
+segmentation/work/
+segmentation/demo/

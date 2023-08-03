@@ -1,7 +1,7 @@
 # Copyright (c) Shanghai AI Lab. All rights reserved.
 _base_ = [
     '../_base_/models/upernet_r50.py', '../_base_/datasets/ade20k.py',
-    '../_base_/default_runtime.py', '../_base_/schedules/schedule_160k.py'
+    '../_base_/default_runtime.py', '../_base_/schedules/schedule_320k.py'
 ]
 # pretrained = 'https://dl.fbaipublicfiles.com/deit/deit_base_patch16_224-b5f2ef4d.pth'
 pretrained = 'pretrained/deit_base_patch16_224-b5f2ef4d.pth'
