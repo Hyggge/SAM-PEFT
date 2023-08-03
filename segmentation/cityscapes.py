@@ -4,7 +4,8 @@ import os.path as osp
 
 import mmcv
 from cityscapesscripts.preparation.json2labelImg import json2labelImg
-
+import os
+import numpy as np
 
 def convert_json_to_label(json_file):
     label_file = json_file.replace('_polygons.json', '_labelTrainIds.png')
@@ -50,6 +51,22 @@ def main():
             filenames.append(poly.replace('_gtFine_polygons.json', ''))
         with open(osp.join(out_dir, f'{split}.txt'), 'w') as f:
             f.writelines(f + '\n' for f in filenames)
+
+def restoreRoadOnly():
+    dir = 'data/cityscapes/gtFine/'
+    for root, dirs, files in os.walk(dir):
+        if os.path.basename(root) == 'test':
+            continue
+        if len(files) != 0:
+            for file in files:
+                if file.endswith('_gtFine_labelTrainIds.png'):
+                    img = mmcv.imread(os.path.join(root, file), flag='grayscale')
+                    img_array = np.array(img)
+                    output_array = np.ones_like(img_array)
+                    output_array = np.where(img_array == 0, img_array, output_array)
+                    output_img_name = file.replace('_gtFine_labelTrainIds.png', '_gtFine_labelTrainIds_road.png')
+                    output_img_path = os.path.join(root, output_img_name)
+                    mmcv.imwrite(output_array, output_img_path)
 
 
 if __name__ == '__main__':
