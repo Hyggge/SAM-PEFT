@@ -25,6 +25,9 @@ class ViTAdapter(TIMMVisionTransformer):
         
         super().__init__(num_heads=num_heads, pretrained=pretrained,
                          with_cp=with_cp, *args, **kwargs)
+        for name, param in self.named_parameters():
+            print('frozen:', name)
+            param.requires_grad = False
         
         # self.num_classes = 80
         self.cls_token = None
