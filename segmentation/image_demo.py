@@ -35,6 +35,15 @@ def main():
     # build the model from a config file and a checkpoint file
     
     model = init_segmentor(args.config, checkpoint=None, device=args.device)
+    print('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
+    for name, param in model.named_parameters():
+        print(name, ':', param.size())
+    total_params = sum(p.numel() for p in model.parameters())
+    trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    print('Total:', total_params, ' Trainable:', trainable_params)
+    print('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
+
+
     checkpoint = load_checkpoint(model, args.checkpoint, map_location='cpu')
     if 'CLASSES' in checkpoint.get('meta', {}):
         model.CLASSES = checkpoint['meta']['CLASSES']
