@@ -35,13 +35,29 @@ def main():
     # build the model from a config file and a checkpoint file
     
     model = init_segmentor(args.config, checkpoint=None, device=args.device)
+
     print('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
     for name, param in model.named_parameters():
         print(name, ':', param.size())
+
     total_params = sum(p.numel() for p in model.parameters())
     trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    backbone_params = sum(p.numel() for p in model.backbone.parameters())
+    vit_params = sum(p.numel() for name, p in model.named_parameters() if ('pos_embed' in name or 'patch_embed' in name)) + \
+                    sum(p.numel() for p in model.backbone.blocks.parameters())
+    adapter_params = sum(p.numel() for p in model.backbone.spm.parameters()) + \
+                    sum(p.numel() for p in model.backbone.interactions.parameters()) + \
+                    sum(p.numel() for name, p in model.named_parameters() if ('level_embed' in name or 'backbone.up' in name or 'backbone.norm' in name) )
+    decode_head_params = sum(p.numel() for p in model.decode_head.parameters())
+    auxiliary_head_params = sum(p.numel() for p in model.auxiliary_head.parameters())
+
     print('Total:', total_params, ' Trainable:', trainable_params)
-    print('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
+    print('Backbone:', backbone_params)
+    print('Vit:', vit_params)
+    print('Adapter:', adapter_params)
+    print('Decode Head:', decode_head_params)
+    print('Auxiliary Head:', auxiliary_head_params)
+    print('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>') 
 
 
     checkpoint = load_checkpoint(model, args.checkpoint, map_location='cpu')
