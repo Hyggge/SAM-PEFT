@@ -3,9 +3,11 @@ from functools import partial
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import torch.utils.checkpoint as cp
 from ops.modules import MSDeformAttn
 from timm.models.layers import DropPath
+from ops_dcnv3.modules import DCNv3
 
 _logger = logging.getLogger(__name__)
 
@@ -232,35 +234,67 @@ class InteractionBlockWithCls(nn.Module):
         return x, c, cls
     
 
+class to_channels_first(nn.Module):
+    def __init__(self):
+        super().__init__()
+    def forward(self, x):
+        return x.permute(0, 3, 1, 2)
+
+class to_channels_last(nn.Module):
+    def __init__(self):
+        super().__init__()
+    def forward(self, x):
+        return x.permute(0, 2, 3, 1)
+
+
 class SpatialPriorModule(nn.Module):
     def __init__(self, inplanes=64, embed_dim=384, with_cp=False):
         super().__init__()
         self.with_cp = with_cp
 
         self.stem = nn.Sequential(*[
-            nn.Conv2d(3, inplanes, kernel_size=3, stride=2, padding=1, bias=False),
+            to_channels_last(),
+            DCNv3(channels=3, kernel_size=3, stride=2, pad=1),
+            to_channels_first(),
+            nn.Conv2d(3, inplanes, kernel_size=1, stride=1, padding=0, bias=False),
             nn.SyncBatchNorm(inplanes),
             nn.ReLU(inplace=True),
-            nn.Conv2d(inplanes, inplanes, kernel_size=3, stride=1, padding=1, bias=False),
+
+            to_channels_last(),
+            DCNv3(channels=inplanes, kernel_size=3, stride=1, pad=1),
+            to_channels_first(),
             nn.SyncBatchNorm(inplanes),
             nn.ReLU(inplace=True),
-            nn.Conv2d(inplanes, inplanes, kernel_size=3, stride=1, padding=1, bias=False),
+
+            to_channels_last(),
+            DCNv3(channels=inplanes, kernel_size=3, stride=1, pad=1),
+            to_channels_first(),
             nn.SyncBatchNorm(inplanes),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         ])
+
+
         self.conv2 = nn.Sequential(*[
-            nn.Conv2d(inplanes, 2 * inplanes, kernel_size=3, stride=2, padding=1, bias=False),
+            to_channels_last(),
+            DCNv3(channels=inplanes, kernel_size=3, stride=2, pad=1),
+            to_channels_first(),
+            nn.Conv2d(inplanes, 2 * inplanes, kernel_size=1, stride=1, padding=0, bias=False),
             nn.SyncBatchNorm(2 * inplanes),
             nn.ReLU(inplace=True)
         ])
         self.conv3 = nn.Sequential(*[
-            nn.Conv2d(2 * inplanes, 4 * inplanes, kernel_size=3, stride=2, padding=1, bias=False),
+            to_channels_last(),
+            DCNv3(channels=2 * inplanes, kernel_size=3, stride=2, pad=1),
+            to_channels_first(),
+            nn.Conv2d(2 * inplanes, 4 * inplanes, kernel_size=1, stride=1, padding=0, bias=False),
             nn.SyncBatchNorm(4 * inplanes),
             nn.ReLU(inplace=True)
         ])
         self.conv4 = nn.Sequential(*[
-            nn.Conv2d(4 * inplanes, 4 * inplanes, kernel_size=3, stride=2, padding=1, bias=False),
+            to_channels_last(),
+            DCNv3(channels=4 * inplanes, kernel_size=3, stride=2, pad=1),
+            to_channels_first(),
             nn.SyncBatchNorm(4 * inplanes),
             nn.ReLU(inplace=True)
         ])
