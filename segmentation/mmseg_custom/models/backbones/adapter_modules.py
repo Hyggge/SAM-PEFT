@@ -254,7 +254,7 @@ class SpatialPriorModule(nn.Module):
 
         self.stem = nn.Sequential(*[
             to_channels_last(),
-            DCNv3(channels=3, kernel_size=3, stride=2, pad=1),
+            DCNv3(channels=3, kernel_size=3, stride=2, pad=1, group=1),
             to_channels_first(),
             nn.Conv2d(3, inplanes, kernel_size=1, stride=1, padding=0, bias=False),
             nn.SyncBatchNorm(inplanes),
