@@ -7,7 +7,9 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
+from mmcv_custom import load_checkpoint
+from mmseg.models.builder import BACKBONES
+from mmseg.utils import get_root_logger
 from typing import Optional, Tuple, Type
 
 class MLPBlock(nn.Module):
@@ -44,6 +46,7 @@ class LayerNorm2d(nn.Module):
 
 
 # This class and its supporting functions below lightly adapted from the ViTDet backbone available at: https://github.com/facebookresearch/detectron2/blob/main/detectron2/modeling/backbone/vit.py # noqa
+@BACKBONES.register_module()
 class SAMViT(nn.Module):
     def __init__(
         self,
@@ -63,6 +66,7 @@ class SAMViT(nn.Module):
         rel_pos_zero_init: bool = True,
         window_size: int = 0,
         global_attn_indexes: Tuple[int, ...] = (),
+        pretrained: Optional[str] = None,
     ) -> None:
         """
         Args:
@@ -84,6 +88,8 @@ class SAMViT(nn.Module):
         """
         super().__init__()
         self.img_size = img_size
+        self.embed_dim = embed_dim
+        self.norm_layer = norm_layer
 
         self.patch_embed = PatchEmbed(
             kernel_size=(patch_size, patch_size),
@@ -132,6 +138,23 @@ class SAMViT(nn.Module):
             ),
             LayerNorm2d(out_chans),
         )
+        self.init_weights(pretrained)
+
+
+    def init_weights(self, pretrained=None):
+        """Initialize the weights in backbone.
+
+        Args:
+            pretrained (str, optional): Path to pre-trained weights.
+                Defaults to None.
+        """
+        if isinstance(pretrained, str):
+            state_dict = torch.load(pretrained, map_location="cpu")
+            new_dict = {}
+            for key in state_dict.keys():
+                if key.startswith("image_encoder"):
+                    new_dict[key[14:]] = state_dict[key]
+            self.load_state_dict(new_dict, strict=False)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.patch_embed(x)
