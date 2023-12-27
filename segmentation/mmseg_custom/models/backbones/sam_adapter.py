@@ -127,7 +127,7 @@ class SAMAdapter(SAMViT):
         # Patch Embedding forward
         x = self.patch_embed(x) # (B, H, W, C)
         bs, H, W, dim = x.shape
-        pos_embed = self._get_pos_embed(self, H, W)
+        pos_embed = self._get_pos_embed(self.pos_embed, H, W)
         x = x + pos_embed # (B, H, W, C)
 
         # Interaction
