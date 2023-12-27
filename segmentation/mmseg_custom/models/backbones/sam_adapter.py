@@ -170,7 +170,8 @@ class SAMAdapter(SAMViT):
 
 
 class WrappedBlock(nn.Module):
-    def __init__(self, block): 
+    def __init__(self, block):
+        super().__init__()
         self.block = block
     
     def forward(self, x, H, W):
