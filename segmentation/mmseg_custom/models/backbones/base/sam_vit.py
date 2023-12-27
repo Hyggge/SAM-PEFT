@@ -121,23 +121,24 @@ class SAMViT(nn.Module):
             )
             self.blocks.append(block)
 
-        self.neck = nn.Sequential(
-            nn.Conv2d(
-                embed_dim,
-                out_chans,
-                kernel_size=1,
-                bias=False,
-            ),
-            LayerNorm2d(out_chans),
-            nn.Conv2d(
-                out_chans,
-                out_chans,
-                kernel_size=3,
-                padding=1,
-                bias=False,
-            ),
-            LayerNorm2d(out_chans),
-        )
+        # self.neck = nn.Sequential(
+        #     nn.Conv2d(
+        #         embed_dim,
+        #         out_chans,
+        #         kernel_size=1,
+        #         bias=False,
+        #     ),
+        #     LayerNorm2d(out_chans),
+        #     nn.Conv2d(
+        #         out_chans,
+        #         out_chans,
+        #         kernel_size=3,
+        #         padding=1,
+        #         bias=False,
+        #     ),
+        #     LayerNorm2d(out_chans),
+        # )
+
         self.init_weights(pretrained)
 
 
@@ -164,7 +165,7 @@ class SAMViT(nn.Module):
         for blk in self.blocks:
             x = blk(x)
 
-        x = self.neck(x.permute(0, 3, 1, 2))
+        # x = self.neck(x.permute(0, 3, 1, 2))
 
         return x
 
