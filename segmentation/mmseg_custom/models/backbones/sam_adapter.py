@@ -129,6 +129,7 @@ class SAMAdapter(SAMViT):
         bs, H, W, dim = x.shape
         pos_embed = self._get_pos_embed(self.pos_embed, H, W)
         x = x + pos_embed # (B, H, W, C)
+        x = x.view(bs, -1, dim)
 
         # Interaction
         outs = list()
