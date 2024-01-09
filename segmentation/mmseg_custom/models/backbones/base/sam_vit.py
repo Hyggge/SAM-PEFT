@@ -304,9 +304,10 @@ class Attention(nn.Module):
         attn = (q * self.scale) @ k.transpose(-2, -1)
         # attn_crop with shape (B * nHead, H * W, H * W)
         attn_crop = attn[:, prompt_num:, prompt_num:]
+        q_crop = q[:, prompt_num:, :]
 
         if self.use_rel_pos:
-            attn_crop = add_decomposed_rel_pos(attn_crop, q, self.rel_pos_h, self.rel_pos_w, (H, W), (H, W))
+            attn_crop = add_decomposed_rel_pos(attn_crop, q_crop, self.rel_pos_h, self.rel_pos_w, (H, W), (H, W))
 
         attn[:, prompt_num:, prompt_num:] = attn_crop
         attn = attn.softmax(dim=-1)
