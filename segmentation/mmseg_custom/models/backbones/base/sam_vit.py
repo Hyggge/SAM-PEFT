@@ -140,10 +140,10 @@ class SAMViT(nn.Module):
         #     LayerNorm2d(out_chans),
         # )
 
-        self.init_weights(pretrained)
+        self._init_sam_weights(pretrained)
 
 
-    def init_weights(self, pretrained=None):
+    def _init_sam_weights(self, pretrained=None):
         """Initialize the weights in backbone.
 
         Args:
