@@ -4,7 +4,6 @@ from mmcv.parallel import DataContainer as DC
 from mmseg.datasets.builder import PIPELINES
 from mmseg.datasets.pipelines.formatting import to_tensor
 
-
 @PIPELINES.register_module(force=True)
 class DefaultFormatBundle(object):
     """Default formatting bundle.
@@ -42,6 +41,15 @@ class DefaultFormatBundle(object):
             results['gt_masks'] = DC(to_tensor(results['gt_masks']))
         if 'gt_labels' in results:
             results['gt_labels'] = DC(to_tensor(results['gt_labels']))
+        
+        if 'seg_fields' in results:
+            aux_gt_list = []
+            for field in results['seg_fields']:
+                if 'aux_gt' in field:
+                    aux_gt_list.append(DC(to_tensor(results[field])))
+                    results.pop(field)
+
+        results['aux_gt_list'] = aux_gt_list
 
         return results
 
