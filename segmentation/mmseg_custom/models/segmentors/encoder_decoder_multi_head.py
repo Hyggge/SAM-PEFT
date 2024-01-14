@@ -98,10 +98,13 @@ class EncoderDecoderMultiHead(BaseSegmentor):
         seg_logits = self.decode_head.forward_test(x, img_metas, self.test_cfg)
         return seg_logits
 
-    def _auxiliary_head_forward_train(self, x, img_metas, gt_semantic_seg, aux_gt_list):
+    def _auxiliary_head_forward_train(self, x, img_metas, gt_semantic_seg, **kwargs):
         """Run forward function and calculate loss for auxiliary head in
         training."""
         losses = dict()
+
+        aux_gt_list = img_metas[0]["seg_fields"][1:]
+
         if len(self.auxiliary_head) == len(aux_gt_list) + 1:
             # the first aux head is for target task
             if isinstance(self.auxiliary_head, nn.ModuleList):
@@ -114,7 +117,7 @@ class EncoderDecoderMultiHead(BaseSegmentor):
                     else:
                         # other aux heads if for aux tasks
                         loss_aux = aux_head.forward_train(x, img_metas, 
-                                                        aux_gt_list[idx-1],
+                                                        kwargs[aux_gt_list[idx-1]],
                                                         self.train_cfg)
                     losses.update(add_prefix(loss_aux, f'aux_{idx}'))
             else:
@@ -127,12 +130,12 @@ class EncoderDecoderMultiHead(BaseSegmentor):
             if isinstance(self.auxiliary_head, nn.ModuleList):
                 for idx, aux_head in enumerate(self.auxiliary_head):
                         loss_aux = aux_head.forward_train(x, img_metas, 
-                                                        aux_gt_list[idx],
+                                                        kwargs[aux_gt_list[idx]],
                                                         self.train_cfg)
                 losses.update(add_prefix(loss_aux, f'aux_{idx}'))
             else:
                 loss_aux = self.auxiliary_head.forward_train(
-                    x, img_metas, aux_gt_list[0], self.train_cfg)
+                    x, img_metas, kwargs[aux_gt_list[0]], self.train_cfg)
                 losses.update(add_prefix(loss_aux, 'aux'))
 
         else:
@@ -146,7 +149,7 @@ class EncoderDecoderMultiHead(BaseSegmentor):
 
         return seg_logit
 
-    def forward_train(self, img, img_metas, gt_semantic_seg, aux_gt_list=[]):
+    def forward_train(self, img, img_metas, gt_semantic_seg, **kwargs):
         """Forward function for training.
 
         Args:
@@ -173,7 +176,7 @@ class EncoderDecoderMultiHead(BaseSegmentor):
 
         if self.with_auxiliary_head:
             loss_aux = self._auxiliary_head_forward_train(
-                x, img_metas, gt_semantic_seg, aux_gt_list)
+                x, img_metas, gt_semantic_seg, **kwargs)
             losses.update(loss_aux)
 
         return losses
