@@ -33,6 +33,7 @@ class SAMAdapter(SAMViT):
         use_extra_extractor=True, 
         with_cp=False,
         drop_path_rate=0.,
+        frozen=False,
         # SAM ViT parameter
         encoder_embed_dim=768,
         encoder_depth=12,
@@ -53,6 +54,7 @@ class SAMAdapter(SAMViT):
             window_size=14,
             out_chans=256, # no use
             pretrained=pretrained, 
+            frozen=frozen
         )
         self.num_block = len(self.blocks)
         self.pretrain_size = (pretrain_size, pretrain_size)

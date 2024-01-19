@@ -24,6 +24,7 @@ class SAMBaseline(SAMViT):
         self,
         pretrain_size=1024,
         pretrained=None,
+        frozen=False,
         # SAM ViT parameter
         encoder_embed_dim=768,
         encoder_depth=12,
@@ -44,6 +45,7 @@ class SAMBaseline(SAMViT):
             window_size=14,
             out_chans=256, # no use
             pretrained=pretrained, 
+            frozen=frozen
         )
 
         self.num_block = len(self.blocks)

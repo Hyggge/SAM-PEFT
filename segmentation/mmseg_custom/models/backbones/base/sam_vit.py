@@ -67,6 +67,7 @@ class SAMViT(nn.Module):
         window_size: int = 0,
         global_attn_indexes: Tuple[int, ...] = (),
         pretrained: Optional[str] = None,
+        frozen: bool = False
     ) -> None:
         """
         Args:
@@ -90,6 +91,7 @@ class SAMViT(nn.Module):
         self.img_size = img_size
         self.embed_dim = embed_dim
         self.norm_layer = norm_layer
+        self.frozen = frozen
 
         self.patch_embed = PatchEmbed(
             kernel_size=(patch_size, patch_size),
@@ -156,6 +158,12 @@ class SAMViT(nn.Module):
                 if key.startswith("image_encoder"):
                     new_dict[key[14:]] = state_dict[key]
             self.load_state_dict(new_dict, strict=False)
+
+        # froze sam
+        if self.frozen:
+            for name, param in self.named_parameters():
+                print('frozen:', name)
+                param.requires_grad = False
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.patch_embed(x)
