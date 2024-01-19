@@ -6,6 +6,7 @@ from .vit_baseline import ViTBaseline
 from .uniperceiver_adapter import UniPerceiverAdapter
 from .sam_adapter import SAMAdapter
 from .sam_baseline import SAMBaseline
+from .sam_adapter_vpt import SAMAdapterVPT
 
 __all__ = ['ViTBaseline', 'ViTAdapter', 'BEiTAdapter',
            'BEiTBaseline', 'UniPerceiverAdapter']
