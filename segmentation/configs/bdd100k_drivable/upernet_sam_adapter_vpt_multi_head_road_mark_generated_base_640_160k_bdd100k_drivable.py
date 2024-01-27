@@ -1,6 +1,6 @@
 # Copyright (c) Hyggge. All rights reserved.
 _base_ = [
-    '../_base_/models/upernet_r50.py', '../_base_/datasets/bdd100k_drivable_multi_head.py',
+    '../_base_/models/upernet_r50.py', '../_base_/datasets/bdd100k_drivable_multi_head_road_mark_generated.py',
     '../_base_/default_runtime.py', '../_base_/schedules/schedule_160k.py'
 ]
 norm_cfg = dict(type='SyncBN', requires_grad=True)
@@ -58,18 +58,17 @@ model = dict(
                 type='CrossEntropyLoss', use_sigmoid=False, loss_weight=0.4)
         ),
         dict(
-            type='FCNHead',
-            in_channels=768,
-            in_index=2,
-            channels=256,
-            num_convs=1,
-            concat_input=False,
+            type='UPerHead',
+            in_channels=[768, 768, 768, 768],
+            in_index=[0, 1, 2, 3],
+            pool_scales=(1, 2, 3, 6),
+            channels=512,
             dropout_ratio=0.1,
             num_classes=150,
             norm_cfg=norm_cfg,
             align_corners=False,
             loss_decode=dict(
-                type='CrossEntropyLoss', use_sigmoid=False, loss_weight=0.8)
+                type='CrossEntropyLoss', use_sigmoid=False, loss_weight=5)
         ),
     ],
     test_cfg=dict(mode='whole')

@@ -7,7 +7,7 @@ img_norm_cfg = dict(
 train_pipeline = [
     dict(type='LoadImageFromFile'),
     dict(type='LoadAnnotations'),
-    dict(type='LoadAuxilliaryGT', aux_gt_dirs=['data/bdd100k/labels/lane/transformed_masks/train'], suffixs=['.png']),
+    dict(type='LoadLaneDetectGT', aux_gt_dirs=['data/bdd100k/labels/lane/generated_masks/train'], suffixs=['_mask.jpg']),
     dict(type='Resize', img_scale=(640, 384), keep_ratio=False),
     # dict(type='RandomCrop', crop_size=crop_size, cat_max_ratio=0.75),
     dict(type='RandomFlip', prob=0),
