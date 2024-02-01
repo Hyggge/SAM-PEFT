@@ -63,9 +63,11 @@ class LoadRoadMarkGT(object):
                 img_bytes, flag='grayscale', backend='cv2').squeeze().astype(np.uint8)
             # convert to train ID
             for target, ori in enumerate(self.id_list):
-                if ori == 249 or ori == 255:
+                if ori == 249:
                     # deal with noise and ignored label
-                    aux_gt[aux_gt == ori] = 255
+                    aux_gt[aux_gt == ori] = 0
+                elif ori == 255:
+                    pass
                 else:
                     aux_gt[aux_gt == ori] = target
             # aux_gt_list.append(aux_gt)
