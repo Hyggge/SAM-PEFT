@@ -242,7 +242,7 @@ class Block(nn.Module):
 
             kv_prompt_emb = kv_prompt_emb.unsqueeze(0)
             kv_prompt_emb = kv_prompt_emb.expand(num_windows, -1, -1, -1, -1)
-            kv_prompt_emb = kv_prompt_emb.reshape((-1, head_num, kv_prompt_num, C / head_num))
+            kv_prompt_emb = kv_prompt_emb.reshape((-1, head_num, kv_prompt_num, C // head_num))
 
         # After attention, prompt_emb is removed
         x = self.attn(x, prompt_emb, kv_prompt_emb)
@@ -300,7 +300,7 @@ class Attention(nn.Module):
         _, prompt_num, _ = prompt_emb.shape  # dim = (B, prompt_num, C)
         _, _, kv_prompt_num, _ = kv_prompt_emb.shape # dim = (B, num_heads, kv_prompt_num, C / num_heads)
 
-        kv_prompt_emb = kv_prompt_emb.reshape((-1, kv_prompt_num, C / self.num_heads)) # dim = (B * num_heads, kv_prompt_num, C / num_heads)
+        kv_prompt_emb = kv_prompt_emb.reshape((-1, kv_prompt_num, C // self.num_heads)) # dim = (B * num_heads, kv_prompt_num, C / num_heads)
 
         x = x.view(B, H * W, C)
         # x with shape (B, prompt_num + H * W, C)
