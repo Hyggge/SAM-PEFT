@@ -9,6 +9,8 @@ from .sam_baseline import SAMBaseline
 from .sam_adapter_vpt import SAMAdapterVPT
 from .sam_baseline_vpt import SAMBaselineVPT
 from .sam_adapter_e2vpt import SAMAdapterE2VPT
+from .sam_baseline_ssf import SAMBaselineSSF
+from .sam_adapter_ssf import SAMAdapterSSF
 
 __all__ = ['ViTBaseline', 'ViTAdapter', 'BEiTAdapter',
            'BEiTBaseline', 'UniPerceiverAdapter']
