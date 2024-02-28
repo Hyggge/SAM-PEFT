@@ -13,6 +13,8 @@ from .sam_baseline_ssf import SAMBaselineSSF
 from .sam_adapter_ssf import SAMAdapterSSF
 from .sam_baseline_af import SAMBaselineAF
 from .sam_adapter_af import SAMAdapterAF
+from .sam_baseline_bitfit import SAMBaselineBitFit
+from .sam_adapter_bitfit import SAMAdapterBitFit
 
 __all__ = ['ViTBaseline', 'ViTAdapter', 'BEiTAdapter',
            'BEiTBaseline', 'UniPerceiverAdapter']
