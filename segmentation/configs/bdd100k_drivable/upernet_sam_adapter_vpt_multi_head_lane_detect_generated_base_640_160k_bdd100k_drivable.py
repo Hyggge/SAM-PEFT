@@ -87,7 +87,7 @@ lr_config = dict(_delete_=True,
                  warmup_ratio=1e-6,
                  power=1.0, min_lr=0.0, by_epoch=False)
 # By default, models are trained on 8 GPUs with 2 images per GPU
-data=dict(samples_per_gpu=4)
+data=dict(samples_per_gpu=2)
 runner = dict(type='IterBasedRunner')
 checkpoint_config = dict(by_epoch=False, interval=1000, max_keep_ckpts=1)
 evaluation = dict(interval=16000, metric='mIoU', save_best='mIoU')
