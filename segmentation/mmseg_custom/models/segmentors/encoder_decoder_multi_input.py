@@ -255,7 +255,7 @@ class EncoderDecoderMultiInput(BaseSegmentor):
 
     def simple_test(self, img, img_meta, rescale=True, **kwargs):
         """Simple test with single image."""
-        seg_logit = self.inference(img, img_meta, rescale, kwargs["aux_gt_1"])
+        seg_logit = self.inference(img, img_meta, rescale, kwargs["aux_gt_1"][0])
         seg_pred = seg_logit.argmax(dim=1)
         if torch.onnx.is_in_onnx_export():
             # our inference backend only support 4D output
@@ -274,7 +274,7 @@ class EncoderDecoderMultiInput(BaseSegmentor):
         # aug_test rescale all imgs back to ori_shape for now
         assert rescale
         # to save memory, we get augmented seg logit inplace
-        seg_logit = self.inference(imgs[0], img_metas[0], rescale, kwargs["aux_gt_1"]) # fix
+        seg_logit = self.inference(imgs[0], img_metas[0], rescale, kwargs["aux_gt_1"][0]) # fix
         for i in range(1, len(imgs)):
             cur_seg_logit = self.inference(imgs[i], img_metas[i], rescale)
             seg_logit += cur_seg_logit

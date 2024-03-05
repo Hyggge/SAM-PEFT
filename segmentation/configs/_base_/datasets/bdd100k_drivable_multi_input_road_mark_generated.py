@@ -19,7 +19,7 @@ train_pipeline = [
 ]
 test_pipeline = [
     dict(type='LoadImageFromFile'),
-    dict(type='LoadRoadMarkGT', aux_gt_dirs=['data/bdd100k/labels/road_marking_seg/train'], suffixs=['.png']),
+    dict(type='LoadRoadMarkGT', aux_gt_dirs=['data/bdd100k/labels/road_marking_seg/val'], suffixs=['.png']),
     dict(
         type='MultiScaleFlipAug',
         img_scale=(640, 384),

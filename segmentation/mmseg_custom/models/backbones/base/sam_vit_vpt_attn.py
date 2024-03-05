@@ -225,7 +225,7 @@ class Block(nn.Module):
 
     def forward(self, x: torch.Tensor, prompt_emb: torch.Tensor) -> torch.Tensor:
         B, H, W, C = x.shape
-        prompt_num, _ = prompt_emb.shape
+        _, prompt_num, _ = prompt_emb.shape
         shortcut = x
         x = self.norm1(x)
         # Window partition
