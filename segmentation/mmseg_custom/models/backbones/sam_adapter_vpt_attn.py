@@ -12,7 +12,7 @@ from ops.modules import MSDeformAttn
 from timm.models.layers import trunc_normal_
 from torch.nn.init import normal_
 from functools import partial
-from .base.sam_vit_vpt import SAMViTVPT
+from .base.sam_vit_vpt_attn import SAMViTVPTAttn
 from .adapter_modules import SpatialPriorModule, InteractionBlock, deform_inputs
 
 _logger = logging.getLogger(__name__)
@@ -23,7 +23,7 @@ class PriorExtractionModule(nn.Module):
         super().__init__()
 
         self.stem = nn.Sequential(*[
-            nn.Conv2d(3, inplanes, kernel_size=3, stride=2, padding=1, bias=False),
+            nn.Conv2d(1, inplanes, kernel_size=3, stride=2, padding=1, bias=False),
             nn.SyncBatchNorm(inplanes),
             nn.ReLU(inplace=True),
             nn.Conv2d(inplanes, inplanes, kernel_size=3, stride=1, padding=1, bias=False),
@@ -46,6 +46,7 @@ class PriorExtractionModule(nn.Module):
         ])
 
     def forward(self, x):
+        x = x.float()
         x = self.stem(x)
         x = self.conv2(x)
         x = self.conv3(x)
@@ -65,8 +66,9 @@ class PriorPromptAttn(nn.Module):
         self.to_out = nn.Linear(inner_dim, prompt_dim)
     
     def forward(self, prompt, prior):
+        n_q, _ = prompt.shape
         B, n_k, _ = prior.shape
-        _, n_q, _ = prompt.shape
+        prompt = prompt.expand(B, -1, -1)
 
         # qkv with shape(B, nHead, N, C)
         k = self.to_k(prior).reshape(B, n_k, self.head_num, self.inner_dim // self.head_num).permute(0, 2, 1, 3)
@@ -84,7 +86,7 @@ class PriorPromptAttn(nn.Module):
    
 
 @BACKBONES.register_module()
-class SAMAdapterVPTAttn(SAMViTVPT):
+class SAMAdapterVPTAttn(SAMViTVPTAttn):
     def __init__(
         self,
         pretrain_size=1024,
@@ -292,6 +294,8 @@ class WrappedBlock(nn.Module):
         
         """
         bs, n, c = x.shape
+
+        # new_prompt_emb with shape (B, N_Prompt, C)
         new_prompt_emb = self.ppa(self.prompt_emb, self.prior)
 
         return self.block(x.view(bs, H, W, c), new_prompt_emb).view(bs, n, c)
