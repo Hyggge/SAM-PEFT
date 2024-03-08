@@ -298,4 +298,6 @@ class WrappedBlock(nn.Module):
         # new_prompt_emb with shape (B, N_Prompt, C)
         new_prompt_emb = self.ppa(self.prompt_emb, self.prior)
 
+        new_prompt_emb = self.prompt_emb.expand(bs, -1, -1) + new_prompt_emb
+
         return self.block(x.view(bs, H, W, c), new_prompt_emb).view(bs, n, c)
