@@ -228,6 +228,8 @@ class Block(nn.Module):
         _, prompt_num, _ = prompt_emb.shape
         shortcut = x
         x = self.norm1(x)
+        prompt_emb = self.norm1(prompt_emb)
+
         # Window partition
         if self.window_size > 0:
             x, pad_hw = window_partition(x, self.window_size)
