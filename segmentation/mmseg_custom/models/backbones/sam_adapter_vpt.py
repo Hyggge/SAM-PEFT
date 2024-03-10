@@ -4,19 +4,22 @@ import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from operator import mul
+from functools import reduce
+from torch.nn.modules.utils import _pair
 from mmseg.models.builder import BACKBONES
 from ops.modules import MSDeformAttn
 from timm.models.layers import trunc_normal_
 from torch.nn.init import normal_
 from functools import partial
-from .base.sam_vit import SAMViT
+from .base.sam_vit_vpt import SAMViTVPT
 from .adapter_modules import SpatialPriorModule, InteractionBlock, deform_inputs
 
 _logger = logging.getLogger(__name__)
 
 
 @BACKBONES.register_module()
-class SAMAdapter(SAMViT):
+class SAMAdapterVPT(SAMViTVPT):
     def __init__(
         self,
         pretrain_size=1024,
@@ -33,12 +36,15 @@ class SAMAdapter(SAMViT):
         use_extra_extractor=True, 
         with_cp=False,
         drop_path_rate=0.,
-        frozen=False,
         # SAM ViT parameter
         encoder_embed_dim=768,
         encoder_depth=12,
         encoder_num_heads=12,
         encoder_global_attn_indexes=[2, 5, 8, 11],
+        # VPT parameter
+        prompt_dropout=0.,
+        prompt_token_num=50,
+        prompt_project=-1
     ) :
         super().__init__(
             depth=encoder_depth,
@@ -54,14 +60,34 @@ class SAMAdapter(SAMViT):
             window_size=14,
             out_chans=256, # no use
             pretrained=pretrained, 
-            frozen=frozen
         )
+
+        embed_dim = self.embed_dim
+
+        # prompt dropout setting
+        self.prompt_dropout = nn.Dropout(prompt_dropout)
+        
+        # prompt project setting
+        if prompt_project > -1:
+            prompt_dim = prompt_project
+            self.prompt_proj = nn.Linear(prompt_dim, embed_dim)
+            nn.init.kaiming_normal_(
+                self.prompt_proj.weight, a=0, mode='fan_out')
+            
+        else:
+            prompt_dim = embed_dim
+            self.prompt_proj = nn.Identity()
+
+        # virtual prompt
+        val = math.sqrt(6. / float(3 * reduce(mul, _pair(self.patch_size), 1) + prompt_dim))  # noqa   
+        self.prompt_embeddings = nn.Parameter(torch.zeros(encoder_depth, prompt_token_num, prompt_dim))
+        nn.init.uniform_(self.prompt_embeddings, -val, val)
+
         self.num_block = len(self.blocks)
         self.pretrain_size = (pretrain_size, pretrain_size)
         self.interaction_indexes = interaction_indexes
         self.add_vit_feature = add_vit_feature
 
-        embed_dim = self.embed_dim
         self.level_embed = nn.Parameter(torch.zeros(3, embed_dim))
         self.spm = SpatialPriorModule(inplanes=conv_inplane, embed_dim=embed_dim, with_cp=False)
         self.interactions = nn.Sequential(*[
@@ -137,8 +163,13 @@ class SAMAdapter(SAMViT):
         outs = list()
         
         wrapped_blocks = nn.ModuleList()
-        for blk in self.blocks:
-            wrapped_blocks.append(WrappedBlock(blk))
+        for i, blk in enumerate(self.blocks):
+            wrapped_blocks.append(
+                WrappedBlock(
+                    blk, 
+                    self.prompt_dropout(self.prompt_proj(self.prompt_embeddings[i])) 
+                )
+            )
 
 
         for i, layer in enumerate(self.interactions):
@@ -173,9 +204,10 @@ class SAMAdapter(SAMViT):
 
 
 class WrappedBlock(nn.Module):
-    def __init__(self, block):
+    def __init__(self, block, prompt_emb):
         super().__init__()
         self.block = block
+        self.prompt_emb = prompt_emb
     
     def forward(self, x, H, W):
         """ block wrapper for dim adapting
@@ -185,4 +217,4 @@ class WrappedBlock(nn.Module):
         
         """
         bs, n, c = x.shape
-        return self.block(x.view(bs, H, W, c)).view(bs, n, c)
+        return self.block(x.view(bs, H, W, c), self.prompt_emb).view(bs, n, c)

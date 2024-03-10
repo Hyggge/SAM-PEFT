@@ -47,7 +47,7 @@ class LayerNorm2d(nn.Module):
 
 # This class and its supporting functions below lightly adapted from the ViTDet backbone available at: https://github.com/facebookresearch/detectron2/blob/main/detectron2/modeling/backbone/vit.py # noqa
 @BACKBONES.register_module()
-class SAMViT(nn.Module):
+class SAMViTVPT(nn.Module):
     def __init__(
         self,
         img_size: int = 1024,
@@ -67,7 +67,6 @@ class SAMViT(nn.Module):
         window_size: int = 0,
         global_attn_indexes: Tuple[int, ...] = (),
         pretrained: Optional[str] = None,
-        frozen: bool = False
     ) -> None:
         """
         Args:
@@ -91,7 +90,7 @@ class SAMViT(nn.Module):
         self.img_size = img_size
         self.embed_dim = embed_dim
         self.norm_layer = norm_layer
-        self.frozen = frozen
+        self.patch_size = patch_size
 
         self.patch_embed = PatchEmbed(
             kernel_size=(patch_size, patch_size),
@@ -159,11 +158,10 @@ class SAMViT(nn.Module):
                     new_dict[key[14:]] = state_dict[key]
             self.load_state_dict(new_dict, strict=False)
 
-        # froze sam
-        if self.frozen:
-            for name, param in self.named_parameters():
-                print('frozen:', name)
-                param.requires_grad = False
+        # froze sam 
+        for name, param in self.named_parameters():
+            print('frozen:', name)
+            param.requires_grad = False
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.patch_embed(x)
@@ -225,15 +223,22 @@ class Block(nn.Module):
 
         self.window_size = window_size
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor, prompt_emb: torch.Tensor) -> torch.Tensor:
+        B, H, W, C = x.shape
+        prompt_num, _ = prompt_emb.shape
         shortcut = x
         x = self.norm1(x)
+        prompt_emb = prompt_emb.expand(B, -1, -1)
         # Window partition
         if self.window_size > 0:
-            H, W = x.shape[1], x.shape[2]
             x, pad_hw = window_partition(x, self.window_size)
+            num_windows = int(x.shape[0] / B)
+            prompt_emb = prompt_emb.unsqueeze(0)
+            prompt_emb = prompt_emb.expand(num_windows, -1, -1, -1)
+            prompt_emb = prompt_emb.reshape((-1, prompt_num, C))
 
-        x = self.attn(x)
+        # After attention, prompt_emb is removed
+        x = self.attn(x, prompt_emb)
         # Reverse window partition
         if self.window_size > 0:
             x = window_unpartition(x, self.window_size, pad_hw, (H, W))
@@ -283,20 +288,35 @@ class Attention(nn.Module):
             self.rel_pos_h = nn.Parameter(torch.zeros(2 * input_size[0] - 1, head_dim)) # TODO: why -1
             self.rel_pos_w = nn.Parameter(torch.zeros(2 * input_size[1] - 1, head_dim))
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        B, H, W, _ = x.shape
-        # qkv with shape (3, B, nHead, H * W, C)
-        qkv = self.qkv(x).reshape(B, H * W, 3, self.num_heads, -1).permute(2, 0, 3, 1, 4)
-        # q, k, v with shape (B * nHead, H * W, C)
-        q, k, v = qkv.reshape(3, B * self.num_heads, H * W, -1).unbind(0)
+    def forward(self, x: torch.Tensor, prompt_emb: torch.Tensor) -> torch.Tensor:
+        B, H, W, C = x.shape
+        _, prompt_num, _ = prompt_emb.shape
+        x = x.view(B, H * W, C)
+        # x with shape (B, prompt_num + H * W, C)
+        x = torch.cat((prompt_emb, x), dim=1) 
 
+        # qkv with shape (3, B, nHead, prompt_num + H * W, C/nHead)
+        qkv = self.qkv(x).reshape(B, prompt_num + H * W, 3, self.num_heads, -1).permute(2, 0, 3, 1, 4)
+        # q, k, v with shape (B * nHead, prompt_num + H * W, C/nHead)
+        q, k, v = qkv.reshape(3, B * self.num_heads, prompt_num + H * W, -1).unbind(0)
+
+        # attn with shape (B * nHead, prompt_num + H * W, prompt_num + H * W)
         attn = (q * self.scale) @ k.transpose(-2, -1)
+        # attn_crop with shape (B * nHead, H * W, H * W)
+        attn_crop = attn[:, prompt_num:, prompt_num:]
+        q_crop = q[:, prompt_num:, :]
 
         if self.use_rel_pos:
-            attn = add_decomposed_rel_pos(attn, q, self.rel_pos_h, self.rel_pos_w, (H, W), (H, W))
+            attn_crop = add_decomposed_rel_pos(attn_crop, q_crop, self.rel_pos_h, self.rel_pos_w, (H, W), (H, W))
 
+        attn[:, prompt_num:, prompt_num:] = attn_crop
         attn = attn.softmax(dim=-1)
-        x = (attn @ v).view(B, self.num_heads, H, W, -1).permute(0, 2, 3, 1, 4).reshape(B, H, W, -1)
+        # x with shape 
+        x = attn @ v
+        # x with shape (B * nHead, H * W, C/nHead)
+        x = x[:, prompt_num:, :]
+        # x with shape (B, H, W, C)
+        x = x.view(B, self.num_heads, H, W, -1).permute(0, 2, 3, 1, 4).reshape(B, H, W, -1)
         x = self.proj(x)
 
         return x

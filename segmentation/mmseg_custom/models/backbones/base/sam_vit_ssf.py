@@ -12,6 +12,26 @@ from mmseg.models.builder import BACKBONES
 from mmseg.utils import get_root_logger
 from typing import Optional, Tuple, Type
 
+def init_ssf_scale_shift(dim):
+    scale = nn.Parameter(torch.ones(dim))
+    shift = nn.Parameter(torch.zeros(dim))
+
+    nn.init.normal_(scale, mean=1, std=.02)
+    nn.init.normal_(shift, std=.02)
+
+    return scale, shift
+
+
+def ssf_ada(x, scale, shift):
+    assert scale.shape == shift.shape
+    if x.shape[-1] == scale.shape[0]:
+        return x * scale + shift
+    elif x.shape[1] == scale.shape[0]:
+        return x * scale.view(1, -1, 1, 1) + shift.view(1, -1, 1, 1)
+    else:
+        raise ValueError('the input tensor shape does not match the shape of the scale factor.')
+
+
 class MLPBlock(nn.Module):
     def __init__(
         self,
@@ -24,8 +44,17 @@ class MLPBlock(nn.Module):
         self.lin2 = nn.Linear(mlp_dim, embedding_dim)
         self.act = act()
 
+        self.ssf_scale_1, self.ssf_shift_1 = init_ssf_scale_shift(mlp_dim)
+        self.ssf_scale_2, self.ssf_shift_2 = init_ssf_scale_shift(embedding_dim)
+
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return self.lin2(self.act(self.lin1(x)))
+        x = self.lin1(x)
+        x = ssf_ada(x, self.ssf_scale_1, self.ssf_shift_1)
+        x = self.act(x)
+        x = self.lin2(x)
+        x = ssf_ada(x, self.ssf_scale_2, self.ssf_shift_2)
+
+        return x
 
 
 # From https://github.com/facebookresearch/detectron2/blob/main/detectron2/layers/batch_norm.py # noqa
@@ -47,7 +76,7 @@ class LayerNorm2d(nn.Module):
 
 # This class and its supporting functions below lightly adapted from the ViTDet backbone available at: https://github.com/facebookresearch/detectron2/blob/main/detectron2/modeling/backbone/vit.py # noqa
 @BACKBONES.register_module()
-class SAMViT(nn.Module):
+class SAMViTSSF(nn.Module):
     def __init__(
         self,
         img_size: int = 1024,
@@ -67,7 +96,6 @@ class SAMViT(nn.Module):
         window_size: int = 0,
         global_attn_indexes: Tuple[int, ...] = (),
         pretrained: Optional[str] = None,
-        frozen: bool = False
     ) -> None:
         """
         Args:
@@ -91,7 +119,6 @@ class SAMViT(nn.Module):
         self.img_size = img_size
         self.embed_dim = embed_dim
         self.norm_layer = norm_layer
-        self.frozen = frozen
 
         self.patch_embed = PatchEmbed(
             kernel_size=(patch_size, patch_size),
@@ -160,8 +187,8 @@ class SAMViT(nn.Module):
             self.load_state_dict(new_dict, strict=False)
 
         # froze sam
-        if self.frozen:
-            for name, param in self.named_parameters():
+        for name, param in self.named_parameters():
+            if name in new_dict.keys():
                 print('frozen:', name)
                 param.requires_grad = False
 
@@ -225,9 +252,13 @@ class Block(nn.Module):
 
         self.window_size = window_size
 
+        self.ssf_scale_1, self.ssf_shift_1 = init_ssf_scale_shift(dim)
+        self.ssf_scale_2, self.ssf_shift_2 = init_ssf_scale_shift(dim)
+
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         shortcut = x
         x = self.norm1(x)
+        x = ssf_ada(x, self.ssf_scale_1, self.ssf_shift_1)
         # Window partition
         if self.window_size > 0:
             H, W = x.shape[1], x.shape[2]
@@ -239,7 +270,7 @@ class Block(nn.Module):
             x = window_unpartition(x, self.window_size, pad_hw, (H, W))
 
         x = shortcut + x
-        x = x + self.mlp(self.norm2(x))
+        x = x + self.mlp(ssf_ada(self.norm2(x), self.ssf_scale_2, self.ssf_shift_2))
 
         return x
 
@@ -282,11 +313,17 @@ class Attention(nn.Module):
             # initialize relative positional embeddings
             self.rel_pos_h = nn.Parameter(torch.zeros(2 * input_size[0] - 1, head_dim)) # TODO: why -1
             self.rel_pos_w = nn.Parameter(torch.zeros(2 * input_size[1] - 1, head_dim))
+        
+        self.ssf_scale_1, self.ssf_shift_1 = init_ssf_scale_shift(dim * 3)
+        self.ssf_scale_2, self.ssf_shift_2 = init_ssf_scale_shift(dim)
+        
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         B, H, W, _ = x.shape
         # qkv with shape (3, B, nHead, H * W, C)
-        qkv = self.qkv(x).reshape(B, H * W, 3, self.num_heads, -1).permute(2, 0, 3, 1, 4)
+        qkv = self.qkv(x)
+        qkv = ssf_ada(qkv, self.ssf_scale_1, self.ssf_shift_1)
+        qkv = qkv.reshape(B, H * W, 3, self.num_heads, -1).permute(2, 0, 3, 1, 4)
         # q, k, v with shape (B * nHead, H * W, C)
         q, k, v = qkv.reshape(3, B * self.num_heads, H * W, -1).unbind(0)
 
@@ -298,6 +335,7 @@ class Attention(nn.Module):
         attn = attn.softmax(dim=-1)
         x = (attn @ v).view(B, self.num_heads, H, W, -1).permute(0, 2, 3, 1, 4).reshape(B, H, W, -1)
         x = self.proj(x)
+        x = ssf_ada(x, self.ssf_scale_2, self.ssf_shift_2)
 
         return x
 
@@ -450,8 +488,11 @@ class PatchEmbed(nn.Module):
             in_chans, embed_dim, kernel_size=kernel_size, stride=stride, padding=padding
         )
 
+        self.ssf_scale_1, self.ssf_shift_1 = init_ssf_scale_shift(embed_dim)
+
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.proj(x)
         # B C H W -> B H W C
         x = x.permute(0, 2, 3, 1)
+        x = ssf_ada(x, self.ssf_scale_1, self.ssf_shift_1)
         return x

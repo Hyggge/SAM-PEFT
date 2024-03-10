@@ -9,14 +9,14 @@ from ops.modules import MSDeformAttn
 from timm.models.layers import trunc_normal_
 from torch.nn.init import normal_
 from functools import partial
-from .base.sam_vit import SAMViT
+from .base.sam_vit_af import SAMViTAF
 from .adapter_modules import SpatialPriorModule, InteractionBlock, deform_inputs
 
 _logger = logging.getLogger(__name__)
 
 
 @BACKBONES.register_module()
-class SAMAdapter(SAMViT):
+class SAMAdapterAF(SAMViTAF):
     def __init__(
         self,
         pretrain_size=1024,
@@ -33,12 +33,18 @@ class SAMAdapter(SAMViT):
         use_extra_extractor=True, 
         with_cp=False,
         drop_path_rate=0.,
-        frozen=False,
         # SAM ViT parameter
         encoder_embed_dim=768,
         encoder_depth=12,
         encoder_num_heads=12,
         encoder_global_attn_indexes=[2, 5, 8, 11],
+        # AdaptFormer parameter
+        adaptformer_option: str = "parallel",
+        adaptformer_layernorm_option: str = "none",
+        adaptformer_init_option: str = "lora",
+        adaptformer_scalar: str = "0.1",
+        adaptformer_bottleneck: int = 64,
+        adaptformer_dropout: float = 0.1
     ) :
         super().__init__(
             depth=encoder_depth,
@@ -54,7 +60,12 @@ class SAMAdapter(SAMViT):
             window_size=14,
             out_chans=256, # no use
             pretrained=pretrained, 
-            frozen=frozen
+            adaptformer_option=adaptformer_option,
+            adaptformer_layernorm_option=adaptformer_layernorm_option,
+            adaptformer_init_option=adaptformer_init_option,
+            adaptformer_scalar=adaptformer_scalar,
+            adaptformer_bottleneck=adaptformer_bottleneck,
+            adaptformer_dropout=adaptformer_dropout
         )
         self.num_block = len(self.blocks)
         self.pretrain_size = (pretrain_size, pretrain_size)
