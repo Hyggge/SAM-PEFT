@@ -111,7 +111,10 @@ class SAMAdapterVPTAttn(SAMViTVPTAttn):
         # VPT parameter
         prompt_dropout=0.,
         prompt_token_num=50,
-        prompt_project=-1
+        prompt_project=-1,
+        ppa_prior_dim=256,
+        ppa_inner_dim=256,
+        ppa_head_num=8,
     ) :
         super().__init__(
             depth=encoder_depth,
@@ -150,7 +153,7 @@ class SAMAdapterVPTAttn(SAMViTVPTAttn):
 
         self.ppa_list = nn.ModuleList()
         for _ in range(encoder_depth):
-            self.ppa_list.append(PriorPromptAttn(prompt_dim=prompt_dim))
+            self.ppa_list.append(PriorPromptAttn(prompt_dim=prompt_dim, prior_dim=ppa_prior_dim, inner_dim=ppa_inner_dim, head_num=ppa_head_num))
 
         # virtual prompt
         val = math.sqrt(6. / float(3 * reduce(mul, _pair(self.patch_size), 1) + prompt_dim))  # noqa   
