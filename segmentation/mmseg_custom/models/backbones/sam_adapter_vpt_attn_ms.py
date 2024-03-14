@@ -76,7 +76,7 @@ class PriorExtractionModule(nn.Module):
             c3 = self.fc3(c3)
             c4 = self.fc4(c4)
     
-            bs, dim, _, _ = c1.shape
+            bs, dim, _, _ = c2.shape
             # c1 = c1.view(bs, dim, -1).transpose(1, 2)  # 4s
             c2 = c2.view(bs, dim, -1).transpose(1, 2)  # 8s
             c3 = c3.view(bs, dim, -1).transpose(1, 2)  # 16s
