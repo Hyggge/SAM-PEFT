@@ -66,6 +66,7 @@ class PriorExtractionModule(nn.Module):
 
     def forward(self, x):
         def _inner_forward(x):
+            x = x.float()
             c1 = self.stem(x) # x4
             c2 = self.conv2(c1) # x8
             c3 = self.conv3(c2) # x16
