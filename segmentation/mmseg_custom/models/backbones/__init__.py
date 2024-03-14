@@ -16,6 +16,7 @@ from .sam_adapter_af import SAMAdapterAF
 from .sam_baseline_bitfit import SAMBaselineBitFit
 from .sam_adapter_bitfit import SAMAdapterBitFit
 from .sam_adapter_vpt_attn import SAMAdapterVPTAttn
+from .sam_adapter_vpt_attn_ms import SAMAdapterVPTAttnMS
 
 __all__ = ['ViTBaseline', 'ViTAdapter', 'BEiTAdapter',
            'BEiTBaseline', 'UniPerceiverAdapter']
