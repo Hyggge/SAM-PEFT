@@ -4,17 +4,17 @@ _base_ = [
     '../_base_/default_runtime.py', '../_base_/schedules/schedule_160k.py'
 ]
 # pretrained = 'https://dl.fbaipublicfiles.com/deit/deit_base_patch16_224-b5f2ef4d.pth'
-pretrained = 'pretrained/sam_vit_l_0b3195.pth'
+pretrained = 'pretrained/sam_vit_h_4b8939.pth'
 model = dict(
     pretrained=pretrained,
     backbone=dict(
         _delete_=True,
         type='SAMAdapterVPT',
-        # SAM-L Parameters
-        encoder_embed_dim=1024,
-        encoder_depth=24,
+        # SAM-H Parameters
+        encoder_embed_dim=1280,
+        encoder_depth=32,
         encoder_num_heads=16,
-        encoder_global_attn_indexes=[5, 11, 17, 23],
+        encoder_global_attn_indexes=[7, 15, 23, 31],
         # Adapter Parameters
         conv_inplane=64,
         n_points=4,
@@ -22,15 +22,15 @@ model = dict(
         cffn_ratio=0.25,
         deform_ratio=0.5,
         with_cp=True,
-        interaction_indexes=[[0, 5], [6, 11], [12, 17], [18, 23]],
-        drop_path_rate=0.3,
+        interaction_indexes=[[0, 7], [8, 15], [16, 23], [24, 31]],
+        drop_path_rate=0.4,
         # VPT Paramters
-        prompt_dropout=0.1,
+        prompt_dropout=0.2,
         prompt_token_num=50,
         prompt_project=-1
         ),
-    decode_head=dict(num_classes=150, in_channels=[1024, 1024, 1024, 1024]),
-    auxiliary_head=dict(num_classes=150, in_channels=1024),
+    decode_head=dict(num_classes=150, in_channels=[1280, 1280, 1280, 1280]),
+    auxiliary_head=dict(num_classes=150, in_channels=1280),
     # test_cfg=dict(mode='slide', crop_size=(512, 512), stride=(341, 341))
     test_cfg=dict(mode='whole')
 )
