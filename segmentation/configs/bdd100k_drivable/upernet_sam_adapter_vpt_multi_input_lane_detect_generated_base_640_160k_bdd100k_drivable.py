@@ -26,7 +26,11 @@ model = dict(
         # VPT Paramters
         prompt_dropout=0.,
         prompt_token_num=50,
-        prompt_project=-1
+        prompt_project=-1,
+         # PPA Parameters
+        ppa_prior_dim=256,
+        ppa_inner_dim=256,
+        ppa_head_num=8
         ),
     decode_head=dict(num_classes=150, in_channels=[768, 768, 768, 768]),
     auxiliary_head=dict(num_classes=150, in_channels=768),

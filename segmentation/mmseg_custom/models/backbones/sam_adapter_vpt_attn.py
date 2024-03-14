@@ -19,7 +19,7 @@ _logger = logging.getLogger(__name__)
 
 
 class PriorExtractionModule(nn.Module):
-    def __init__(self, inplanes=64):
+    def __init__(self, inplanes=64, prior_dim=256):
         super().__init__()
 
         self.stem = nn.Sequential(*[
@@ -44,12 +44,14 @@ class PriorExtractionModule(nn.Module):
             nn.SyncBatchNorm(4 * inplanes),
             nn.ReLU(inplace=True)
         ])
+        self.fc = nn.Conv2d(4 * inplanes, prior_dim, kernel_size=1, stride=1, padding=0, bias=True)
 
     def forward(self, x):
         x = x.float()
         x = self.stem(x)
         x = self.conv2(x)
         x = self.conv3(x)
+        x = self.fc(x)
         bs, dim, _, _ = x.shape
         x = x.view(bs, dim, -1).transpose(1, 2) 
 
@@ -149,7 +151,7 @@ class SAMAdapterVPTAttn(SAMViTVPTAttn):
             self.prompt_proj = nn.Identity()
 
         # pem
-        self.pem = PriorExtractionModule()
+        self.pem = PriorExtractionModule(inplanes=64, prior_dim=ppa_prior_dim)
 
         self.ppa_list = nn.ModuleList()
         for _ in range(encoder_depth):
