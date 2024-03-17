@@ -44,7 +44,10 @@ class PriorExtractionModule(nn.Module):
             nn.SyncBatchNorm(4 * inplanes),
             nn.ReLU(inplace=True)
         ])
-        self.fc = nn.Conv2d(4 * inplanes, prior_dim, kernel_size=1, stride=1, padding=0, bias=True)
+        if prior_dim == 4 * inplanes:
+            self.fc = nn.Identity()
+        else:
+            self.fc = nn.Conv2d(4 * inplanes, prior_dim, kernel_size=1, stride=1, padding=0, bias=True)
 
     def forward(self, x):
         x = x.float()
