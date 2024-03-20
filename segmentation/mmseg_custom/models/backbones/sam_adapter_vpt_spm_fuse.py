@@ -159,16 +159,20 @@ class SAMAdapterVPTSPMFuse(SAMViTVPT):
         deform_inputs1, deform_inputs2 = deform_inputs(x)
         
         # SPM forward
-        r1, r2, r3, r4 = self.spm(aux_gt) # feature of aux_gt
+        r1, r2, r3, r4 = self.spm(aux_gt.float().repeat(1, 3, 1, 1)) # feature of aux_gt
         t1, t2, t3, t4 = self.spm(x) # feature of target input
-        r = torch.concat([r1, r2, r3, r4], dim=1)
-        t = torch.concat([t1, t2, t3, t4], dim=1)
+        bs, dim, H, W = r1.shape
+        r1 = r1.view(bs, dim, -1).transpose(1, 2)
+        t1 = t1.view(bs, dim, -1).transpose(1, 2)
+        r = torch.cat([r1, r2, r3, r4], dim=1)
+        t = torch.cat([t1, t2, t3, t4], dim=1)
+
         if self.spm_fuse_mode == "concat":
-            c = self.fuse(torch.concat([r, t]))
+            c = self.fuse(torch.cat([r, t], dim=-1))
         elif self.spm_fuse_mode == "add":
             c = self.fuse(r + t)
         
-        c1 = c[:, 0 : t1.size(1), :]
+        c1 = c[:, 0 : t1.size(1), :].transpose(1, 2).view(bs, dim, H, W)
         c2 = c[:, t1.size(1) : t1.size(1)+t2.size(1), :]
         c3 = c[:, t1.size(1)+t2.size(1) : t1.size(1)+t2.size(1)+t3.size(1), :]
         c4 = c[:, t1.size(1)+t2.size(1)+t3.size(1):, :]
