@@ -6,7 +6,7 @@ pip install torch==1.9.0+cu111 torchvision==0.10.0+cu111 torchaudio==0.9.0 -f ht
 pip install mmcv-full==1.4.2 -f https://download.openmmlab.com/mmcv/dist/cu111/torch1.9.0/index.html
 pip install timm==0.4.12
 pip install mmdet==2.22.0 # for Mask2Former
-pip install mmsegmentation==0.20.2
+pip install mmsegmentation==0.21.1
 pip install scipy
 
 ln -s ../detection/ops ./
@@ -24,7 +24,7 @@ pip install torch==1.11.0+cu113 torchvision==0.12.0+cu113 torchaudio==0.11.0 --e
 pip install mmcv-full==1.4.8 -f https://download.openmmlab.com/mmcv/dist/cu113/torch1.11.0/index.html
 pip install timm==0.4.12
 pip install mmdet==2.22.0 # for Mask2Former
-pip install mmsegmentation==0.20.2
+pip install mmsegmentation==0.21.1
 pip install scipy
 pip install https://github.com/OpenGVLab/InternImage/releases/download/whl_files/DCNv3-1.0+cu113torch1.11.0-cp310-cp310-linux_x86_64.whl
 
