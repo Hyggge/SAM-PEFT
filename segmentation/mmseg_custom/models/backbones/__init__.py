@@ -18,6 +18,19 @@ from .sam_adapter_bitfit import SAMAdapterBitFit
 from .sam_adapter_vpt_attn import SAMAdapterVPTAttn
 from .sam_adapter_vpt_attn_ms import SAMAdapterVPTAttnMS
 from .sam_adapter_vpt_spm_fuse import SAMAdapterVPTSPMFuse
+from .sam_adapter_vpt_spm_fuse_hier import SAMAdapterVPTSPMFuseHier
 
 __all__ = ['ViTBaseline', 'ViTAdapter', 'BEiTAdapter',
            'BEiTBaseline', 'UniPerceiverAdapter']
+
+
+
+
+
+
+
+
+
+
+
+
