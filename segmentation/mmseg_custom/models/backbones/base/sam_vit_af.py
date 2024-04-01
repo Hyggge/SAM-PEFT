@@ -305,7 +305,7 @@ class Block(nn.Module):
         self.norm2 = norm_layer(dim)
         self.mlp = MLPBlock(embedding_dim=dim, mlp_dim=int(dim * mlp_ratio), act=act_layer)
 
-        self.window_size = window_size,
+        self.window_size = window_size
     
         self.adaptformer = Adapter(
             d_model=dim,
