@@ -11,14 +11,14 @@ from mmseg.datasets.pipelines.formatting import to_tensor
 @PIPELINES.register_module()
 class LoadLaneDetectGT(object):
     """Transfer gt_semantic_seg to binary mask and generate gt_labels."""
-    def __init__(self, aux_gt_dirs, suffixs):
+    def __init__(self, aux_gt_dirs, suffixs, aux_gt_ids=None):
         self.aux_gt_dirs = aux_gt_dirs
         self.suffixs = suffixs
+        self.aux_gt_ids = list(range(1, len(aux_gt_dirs) + 1)) if aux_gt_ids is None else aux_gt_ids
         self.file_client = mmcv.FileClient(backend='disk')
 
     def __call__(self, results):
-        
-        for i, (dir, suffix) in enumerate(zip(self.aux_gt_dirs, self.suffixs)):
+        for i, dir, suffix in zip(self.aux_gt_ids, self.aux_gt_dirs, self.suffixs):
             filename = os.path.join(dir, results['img_info']['filename'])
             filename = os.path.splitext(filename)[0] + suffix
             img_bytes = self.file_client.get(filename)
@@ -29,8 +29,8 @@ class LoadLaneDetectGT(object):
             aux_gt[aux_gt <= 128] = 0
             aux_gt[aux_gt == 255] = 1
             # aux_gt_list.append(aux_gt)
-            results[f'aux_gt_{i+1}'] = aux_gt
-            results['seg_fields'].append(f'aux_gt_{i+1}')
+            results[f'aux_gt_{i}'] = aux_gt
+            results['seg_fields'].append(f'aux_gt_{i}')
         
         # print(f"{results.keys()=}")
         # print(f"{results['img_info'].keys()=}")
@@ -44,9 +44,10 @@ class LoadLaneDetectGT(object):
 @PIPELINES.register_module()
 class LoadRoadMarkGT(object):
     """Transfer gt_semantic_seg to binary mask and generate gt_labels."""
-    def __init__(self, aux_gt_dirs, suffixs):
+    def __init__(self, aux_gt_dirs, suffixs, aux_gt_ids=None):
         self.aux_gt_dirs = aux_gt_dirs
         self.suffixs = suffixs
+        self.aux_gt_ids = list(range(1, len(aux_gt_dirs) + 1)) if aux_gt_ids is None else aux_gt_ids
         self.file_client = mmcv.FileClient(backend='disk')
         self.id_list = [0, 200, 204, 213, 209, 206, 207, 201, 203, 211, 208, 216, 217, 
             215, 218, 219, 210, 232, 214, 202, 220, 221, 222, 231, 224, 225, 
@@ -54,8 +55,7 @@ class LoadRoadMarkGT(object):
 
 
     def __call__(self, results):
-        
-        for i, (dir, suffix) in enumerate(zip(self.aux_gt_dirs, self.suffixs)):
+        for i, dir, suffix in zip(self.aux_gt_ids, self.aux_gt_dirs, self.suffixs):
             filename = os.path.join(dir, results['img_info']['filename'])
             filename = os.path.splitext(filename)[0] + suffix
             img_bytes = self.file_client.get(filename)
@@ -71,8 +71,8 @@ class LoadRoadMarkGT(object):
                 else:
                     aux_gt[aux_gt == ori] = target
             # aux_gt_list.append(aux_gt)
-            results[f'aux_gt_{i+1}'] = aux_gt
-            results['seg_fields'].append(f'aux_gt_{i+1}')
+            results[f'aux_gt_{i}'] = aux_gt
+            results['seg_fields'].append(f'aux_gt_{i}')
         
         # print(f"{results.keys()=}")
         # print(f"{results['img_info'].keys()=}")
@@ -86,9 +86,10 @@ class LoadRoadMarkGT(object):
 @PIPELINES.register_module()
 class LoadBinRoadMarkGT(object):
     """Transfer gt_semantic_seg to binary mask and generate gt_labels."""
-    def __init__(self, aux_gt_dirs, suffixs):
+    def __init__(self, aux_gt_dirs, suffixs, aux_gt_ids=None):
         self.aux_gt_dirs = aux_gt_dirs
         self.suffixs = suffixs
+        self.aux_gt_ids = list(range(1, len(aux_gt_dirs) + 1)) if aux_gt_ids is None else aux_gt_ids
         self.file_client = mmcv.FileClient(backend='disk')
         self.id_list = [0, 200, 204, 213, 209, 206, 207, 201, 203, 211, 208, 216, 217, 
             215, 218, 219, 210, 232, 214, 202, 220, 221, 222, 231, 224, 225, 
@@ -96,8 +97,7 @@ class LoadBinRoadMarkGT(object):
 
 
     def __call__(self, results):
-        
-        for i, (dir, suffix) in enumerate(zip(self.aux_gt_dirs, self.suffixs)):
+        for i, dir, suffix in zip(self.aux_gt_ids, self.aux_gt_dirs, self.suffixs):
             filename = os.path.join(dir, results['img_info']['filename'])
             filename = os.path.splitext(filename)[0] + suffix
             img_bytes = self.file_client.get(filename)
@@ -113,8 +113,8 @@ class LoadBinRoadMarkGT(object):
                 elif ori != 0:
                     aux_gt[aux_gt == ori] = 1
             # aux_gt_list.append(aux_gt)
-            results[f'aux_gt_{i+1}'] = aux_gt
-            results['seg_fields'].append(f'aux_gt_{i+1}')
+            results[f'aux_gt_{i}'] = aux_gt
+            results['seg_fields'].append(f'aux_gt_{i}')
         
         # print(f"{results.keys()=}")
         # print(f"{results['img_info'].keys()=}")
@@ -128,9 +128,10 @@ class LoadBinRoadMarkGT(object):
 @PIPELINES.register_module()
 class LoadCustomRoadMarkGT(object):
     """Transfer gt_semantic_seg to binary mask and generate gt_labels."""
-    def __init__(self, aux_gt_dirs, suffixs, id_map=None):
+    def __init__(self, aux_gt_dirs, suffixs, id_map=None, aux_gt_ids=None):
         self.aux_gt_dirs = aux_gt_dirs
         self.suffixs = suffixs
+        self.aux_gt_ids = list(range(1, len(aux_gt_dirs) + 1)) if aux_gt_ids is None else aux_gt_ids
         self.file_client = mmcv.FileClient(backend='disk')
         self.id_list = [0, 200, 204, 213, 209, 206, 207, 201, 203, 211, 208, 216, 217,
             215, 218, 219, 210, 232, 214, 202, 220, 221, 222, 231, 224, 225,
@@ -146,7 +147,7 @@ class LoadCustomRoadMarkGT(object):
 
 
     def __call__(self, results):
-        for i, (dir, suffix) in enumerate(zip(self.aux_gt_dirs, self.suffixs)):
+        for i, dir, suffix in zip(self.aux_gt_ids, self.aux_gt_dirs, self.suffixs):
             filename = os.path.join(dir, results['img_info']['filename'])
             filename = os.path.splitext(filename)[0] + suffix
             img_bytes = self.file_client.get(filename)
@@ -156,8 +157,8 @@ class LoadCustomRoadMarkGT(object):
             for k, v in self.id_map.items():
                 aux_gt[aux_gt == k] = v
             # aux_gt_list.append(aux_gt)
-            results[f'aux_gt_{i+1}'] = aux_gt
-            results['seg_fields'].append(f'aux_gt_{i+1}')
+            results[f'aux_gt_{i}'] = aux_gt
+            results['seg_fields'].append(f'aux_gt_{i}')
 
         # print(f"{results.keys()=}")
         # print(f"{results['img_info'].keys()=}")
