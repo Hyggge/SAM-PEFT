@@ -25,7 +25,7 @@ model = dict(
         deform_ratio=0.5,
         interaction_indexes=[[0, 2], [3, 5], [6, 8], [9, 11]],
         # VPT Paramters
-        prompt_dropout=0.1,
+        prompt_dropout=0.,
         prompt_token_num=50,
         prompt_project=-1
         ),
