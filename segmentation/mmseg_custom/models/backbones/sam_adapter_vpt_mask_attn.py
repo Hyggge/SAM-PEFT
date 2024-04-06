@@ -38,14 +38,11 @@ class PriorPromptMaskAttn(nn.Module):
         k = self.to_k(prior).reshape(B, n_k, self.head_num, self.inner_dim // self.head_num).permute(0, 2, 1, 3)
         v = self.to_v(prior).reshape(B, n_k, self.head_num, self.inner_dim // self.head_num).permute(0, 2, 1, 3)
         q = self.to_q(prompt).reshape(B, n_q, self.head_num, self.inner_dim // self.head_num).permute(0, 2, 1, 3)
-        mask = mask.unsqueeze(1).expand(-1, self.head_num, -1, -1)
-
+        mask = mask.unsqueeze(1).unsqueeze(2).expand(-1, self.head_num, n_q, -1)
         scale = self.inner_dim ** -0.5
         attn = (q * scale) @ k.transpose(-2, -1)
-
         if mask is not None:
             attn = attn.masked_fill(mask == 0, -1e9)
-
         attn = attn.softmax(dim=-1)  # attn with shape(B, nHead, N_prompt, N_prior)
         x = (attn @ v).permute(0, 2, 1, 3).reshape(B, n_q, -1)
         x = self.to_out(x)
@@ -214,10 +211,10 @@ class SAMAdapterVPTMaskAttn(SAMViTVPTAttn):
         # Interaction
         outs = list()
         
-        prior = c1 + self._get_pos_embed(self.pos_embed, c1.shape[-2], c1.shape[-1])
+        prior = c1 + self._get_pos_embed(self.pos_embed, c1.shape[-2], c1.shape[-1]).permute(0, 3, 1, 2)
         prior = prior.view(bs, dim, -1).transpose(1, 2)
-        mask = F.interpolate(aux_gt, size=(aux_gt.shape[-2] // 4, aux_gt.shape[-1] // 4), mode='nearest')
-        mask = (mask != 0).view(bs, dim, -1).transpose(1, 2)
+        mask = F.interpolate(aux_gt.float(), size=(aux_gt.shape[-2] // 4, aux_gt.shape[-1] // 4), mode='nearest').long()
+        mask = (mask != 0).view(bs, 1, -1).transpose(1, 2).squeeze()
 
         wrapped_blocks = nn.ModuleList()
         for i, blk in enumerate(self.blocks):
