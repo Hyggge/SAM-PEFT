@@ -23,6 +23,7 @@ from .sam_adapter_spm_fuse import SAMAdapterSPMFuse
 from .sam_adapter_vpt_spm_fuse import SAMAdapterVPTSPMFuse
 from .sam_adapter_vpt_spm_fuse_hier import SAMAdapterVPTSPMFuseHier
 from .sam_adapter_vpt_mask_attn import SAMAdapterVPTMaskAttn
+from .sam_adapter_mask_enhance import SAMAdapterMaskEnhance
 
 __all__ = ['ViTBaseline', 'ViTAdapter', 'BEiTAdapter',
            'BEiTBaseline', 'UniPerceiverAdapter']
