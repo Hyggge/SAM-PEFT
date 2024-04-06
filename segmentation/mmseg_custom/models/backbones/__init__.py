@@ -21,6 +21,7 @@ from .sam_adapter_vpt_attn import SAMAdapterVPTAttn
 from .sam_adapter_vpt_attn_ms import SAMAdapterVPTAttnMS
 from .sam_adapter_vpt_spm_fuse import SAMAdapterVPTSPMFuse
 from .sam_adapter_vpt_spm_fuse_hier import SAMAdapterVPTSPMFuseHier
+from .sam_adapter_vpt_mask_attn import SAMAdapterVPTMaskAttn
 
 __all__ = ['ViTBaseline', 'ViTAdapter', 'BEiTAdapter',
            'BEiTBaseline', 'UniPerceiverAdapter']
