@@ -214,7 +214,7 @@ class SAMAdapterVPTMaskAttn(SAMViTVPTAttn):
         prior = c1 + self._get_pos_embed(self.pos_embed, c1.shape[-2], c1.shape[-1]).permute(0, 3, 1, 2)
         prior = prior.view(bs, dim, -1).transpose(1, 2)
         mask = F.interpolate(aux_gt.float(), size=(aux_gt.shape[-2] // 4, aux_gt.shape[-1] // 4), mode='nearest').long()
-        mask = (mask != 0).view(bs, 1, -1).transpose(1, 2).squeeze()
+        mask = (mask != 0).view(bs, 1, -1).transpose(1, 2).squeeze(-1)
 
         wrapped_blocks = nn.ModuleList()
         for i, blk in enumerate(self.blocks):
