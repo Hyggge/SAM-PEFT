@@ -80,7 +80,8 @@ class SAMAdapterVPTMaskAttn(SAMViTVPTAttn):
         ppa_prior_dim=768,
         ppa_inner_dim=768,
         ppa_head_num=8,
-        ppa_use_proj=[False, False, False, False]
+        ppa_use_proj=[False, False, False, False],
+        ppa_prompt_norm=False
     ) :
         super().__init__(
             depth=encoder_depth,
@@ -114,6 +115,7 @@ class SAMAdapterVPTMaskAttn(SAMViTVPTAttn):
             prompt_dim = embed_dim
             self.prompt_proj = nn.Identity()
 
+        self.ppa_prompt_norm = nn.LayerNorm(prompt_dim) if ppa_prompt_norm else nn.Identity()        
 
         self.ppa_list = nn.ModuleList()
         for _ in range(encoder_depth):
@@ -218,7 +220,7 @@ class SAMAdapterVPTMaskAttn(SAMViTVPTAttn):
 
         wrapped_blocks = nn.ModuleList()
         for i, blk in enumerate(self.blocks):
-            prompt_emb = self.prompt_dropout(self.prompt_proj(self.prompt_embeddings[i]))
+            prompt_emb = self.ppa_prompt_norm(self.prompt_dropout(self.prompt_proj(self.prompt_embeddings[i])))
             wrapped_blocks.append(
                 WrappedBlock(blk, prompt_emb, prior, mask, self.ppa_list[i])
             )
