@@ -206,7 +206,7 @@ class SAMAdapterMaskEmbed(SAMViT):
         mask = F.interpolate(aux_gt.float(), size=(aux_gt.shape[-2] // 4, aux_gt.shape[-1] // 4), mode='nearest').long()
         if self.only_binary_mask:
             mask = (mask != 0)
-        mask_embedding = self.mask_downscaling(mask) # mask with shape (B, 768, H//16, W//16)
+        mask_embedding = self.mask_downscaling(mask.float()) # mask with shape (B, 768, H//16, W//16)
         mask_embedding = self.mask_neck(mask_embedding)
 
         if self.add_vit_feature:
