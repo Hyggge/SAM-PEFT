@@ -226,9 +226,9 @@ class SAMViTAF(nn.Module):
             pretrained (str, optional): Path to pre-trained weights.
                 Defaults to None.
         """
+        new_dict = {}
         if isinstance(pretrained, str):
             state_dict = torch.load(pretrained, map_location="cpu")
-            new_dict = {}
             for key in state_dict.keys():
                 if key.startswith("image_encoder"):
                     new_dict[key[14:]] = state_dict[key]
