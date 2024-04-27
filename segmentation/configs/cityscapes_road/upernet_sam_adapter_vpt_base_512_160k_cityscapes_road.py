@@ -4,26 +4,29 @@ _base_ = [
     '../_base_/default_runtime.py', '../_base_/schedules/schedule_160k.py'
 ]
 # pretrained = 'https://dl.fbaipublicfiles.com/deit/deit_base_patch16_224-b5f2ef4d.pth'
-pretrained = 'pretrained/deit_base_patch16_224-b5f2ef4d.pth'
+pretrained = 'pretrained/sam_vit_b_01ec64.pth'
 model = dict(
     pretrained=pretrained,
     backbone=dict(
         _delete_=True,
-        type='ViTAdapter',
-        patch_size=16,
-        embed_dim=768,
-        depth=12,
-        num_heads=12,
-        mlp_ratio=4,
-        drop_path_rate=0.3,
+        type='SAMAdapterVPT',
+        # SAM-B Parameters
+        encoder_embed_dim=768,
+        encoder_depth=12,
+        encoder_num_heads=12,
+        encoder_global_attn_indexes=[2, 5, 8, 11],
+        # Adapter Parameters
         conv_inplane=64,
         n_points=4,
         deform_num_heads=12,
         cffn_ratio=0.25,
         deform_ratio=0.5,
         interaction_indexes=[[0, 2], [3, 5], [6, 8], [9, 11]],
-        window_attn=[False] * 12,
-        window_size=[None] * 12),
+        # VPT Paramters
+        prompt_dropout=0.,
+        prompt_token_num=50,
+        prompt_project=-1
+        ),
     decode_head=dict(num_classes=150, in_channels=[768, 768, 768, 768]),
     auxiliary_head=dict(num_classes=150, in_channels=768),
     test_cfg=dict(mode='slide', crop_size=(512, 512), stride=(341, 341))
@@ -42,7 +45,7 @@ lr_config = dict(_delete_=True,
                  warmup_ratio=1e-6,
                  power=1.0, min_lr=0.0, by_epoch=False)
 # By default, models are trained on 8 GPUs with 2 images per GPU
-data=dict(samples_per_gpu=4)
+data=dict(samples_per_gpu=2)
 runner = dict(type='IterBasedRunner')
 checkpoint_config = dict(by_epoch=False, interval=1000, max_keep_ckpts=1)
 evaluation = dict(interval=16000, metric='mIoU', save_best='mIoU')

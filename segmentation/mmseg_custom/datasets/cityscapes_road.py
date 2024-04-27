@@ -14,7 +14,7 @@ class CityscapesRoadDataset(CityscapesDataset):
 
     CLASSES = ('road', 'non-road')
 
-    PALETTE = [[128, 64, 128], [140, 140, 140]]
+    PALETTE = [[0, 255, 0], [0, 0, 0]]
 
     def __init__(self,
                  img_suffix='_leftImg8bit.png',
