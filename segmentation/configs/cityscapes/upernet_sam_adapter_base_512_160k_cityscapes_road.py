@@ -1,6 +1,6 @@
 # Copyright (c) Hyggge. All rights reserved.
 _base_ = [
-    '../_base_/models/upernet_r50.py', '../_base_/datasets/cityscapes_512x512.py',
+    '../_base_/models/upernet_r50.py', '../_base_/datasets/cityscapes_road_512x512.py',
     '../_base_/default_runtime.py', '../_base_/schedules/schedule_160k.py'
 ]
 # pretrained = 'https://dl.fbaipublicfiles.com/deit/deit_base_patch16_224-b5f2ef4d.pth'

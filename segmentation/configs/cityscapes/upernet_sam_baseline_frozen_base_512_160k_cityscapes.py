@@ -9,20 +9,13 @@ model = dict(
     pretrained=pretrained,
     backbone=dict(
         _delete_=True,
-        type='SAMAdapter',
+        type='SAMBaseline',
+        frozen=True,
         # SAM-B Parameters
         encoder_embed_dim=768,
         encoder_depth=12,
         encoder_num_heads=12,
         encoder_global_attn_indexes=[2, 5, 8, 11],
-        frozen=True,
-        # Adapter Parameters
-        conv_inplane=64,
-        n_points=4,
-        deform_num_heads=12,
-        cffn_ratio=0.25,
-        deform_ratio=0.5,
-        interaction_indexes=[[0, 2], [3, 5], [6, 8], [9, 11]],
         ),
     decode_head=dict(num_classes=150, in_channels=[768, 768, 768, 768]),
     auxiliary_head=dict(num_classes=150, in_channels=768),
