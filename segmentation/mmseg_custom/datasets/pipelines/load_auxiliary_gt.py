@@ -185,7 +185,7 @@ class LoadADE20kGT(object):
         if selected_labels is not None:
             for i, labels in enumerate(selected_labels):
                 if type(labels) == str:
-                    labels = tuple(labels)
+                    labels = (labels,)
                     self.selected_labels[i] = labels
 
                 for label in labels:
@@ -236,7 +236,7 @@ class LoadCityscapesGT(object):
         if selected_labels is not None:
             for i, labels in enumerate(selected_labels):
                 if type(labels) == str:
-                    labels = tuple(labels)
+                    labels = (labels,)
                     self.selected_labels[i] = labels
 
                 for label in labels:
