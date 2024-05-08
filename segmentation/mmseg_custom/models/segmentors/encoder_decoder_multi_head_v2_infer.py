@@ -44,7 +44,7 @@ class EncoderDecoderMultiHeadV2Infer(BaseSegmentor):
         self.train_cfg = train_cfg
         self.test_cfg = test_cfg
         self.infer_task = 0
-
+        self.num_aux = 0
         assert self.with_decode_head
 
     def _init_decode_head(self, decode_head):
@@ -74,28 +74,29 @@ class EncoderDecoderMultiHeadV2Infer(BaseSegmentor):
         """Encode images with backbone and decode into a semantic segmentation
         map of the same size as input."""
         x = self.extract_feat(img)
+        _, aux_head_input = self.decode_head.forward_test(x, img_metas, self.test_cfg, aux_head_num=1)
+
         if (self.infer_task == 0):
             out = self._decode_head_forward_test(x, img_metas)
         else:
-            aux_gt_list = img_metas[0]["seg_fields"][1:]
             # the first aux head is for target task, auxiliary_head must be a list
-            if len(self.auxiliary_head) == len(aux_gt_list) + 1 and  \
+            if len(self.auxiliary_head) == self.num_aux + 1 and  \
                     isinstance(self.auxiliary_head, nn.ModuleList) and \
                     self.infer_task < len(self.auxiliary_head):
                 aux_head = self.auxiliary_head[self.infer_task]
             # all the aux heads are for aux tasks, if auxiliary_head is a list, means many aux heads exist
-            elif len(self.auxiliary_head) == len(aux_gt_list) and  \
+            elif len(self.auxiliary_head) == self.num_aux and  \
                     isinstance(self.auxiliary_head, nn.ModuleList) and \
                     self.infer_task <= len(self.auxiliary_head):
                 aux_head = self.auxiliary_head[self.infer_task - 1]
             # all the aux heads are for aux tasks, if auxiliary_head is not a list, means only one aux head
-            elif len(self.auxiliary_head) == len(aux_gt_list) and  \
+            elif len(self.auxiliary_head) == self.num_aux  and  \
                     not isinstance(self.auxiliary_head, nn.ModuleList) and \
                     self.infer_task == 1:
                 aux_head = self.auxiliary_head
             else:
                 raise AttributeError("the value of infer_task is invalid!")
-            out = aux_head.forward_test(x, img_metas, self.test_cfg)
+            out = aux_head.forward_test(aux_head_input, img_metas, self.test_cfg)
             
         out = resize(
             input=out,

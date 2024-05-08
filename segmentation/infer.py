@@ -27,7 +27,9 @@ def parse_args():
     parser.add_argument('config', help='test config file path')
     parser.add_argument('checkpoint', help='checkpoint file')
     parser.add_argument('out_dir', help='output result dir')
-    parser.add_argument('--task', type=int, nargs=1, default=0, help="target task")
+    parser.add_argument('--target-task', type=int, default=0, help="target task")
+    parser.add_argument('--num-aux', type=int, default=0, help="number of aux tasks")
+
     args = parser.parse_args()
     return args
 
@@ -40,6 +42,8 @@ def main():
         torch.backends.cudnn.benchmark = True
     assert cfg.model.type == 'EncoderDecoderMultiHeadV2', 'Only support EncoderDecoderMultiHeadV2 model'
     cfg.model.type = "EncoderDecoderMultiHeadV2Infer"
+    assert cfg.model.decode_head.type == 'UPerHeadV2', 'Only support UPerHeadV2 decode head'
+    cfg.model.decode_head.type = "UPerHeadV2Infer"
     # build dataset
     dataset = build_dataset(cfg.data.test)
     data_loader = build_dataloader(
@@ -51,7 +55,6 @@ def main():
     # build the model
     cfg.model.train_cfg = None
     model = build_segmentor(cfg.model, test_cfg=cfg.get('test_cfg'))
-    print(model)
     fp16_cfg = cfg.get('fp16', None)
     if fp16_cfg is not None:
         wrap_fp16_model(model)
@@ -68,7 +71,8 @@ def main():
     loader_indices = data_loader.batch_sampler
 
     for batch_indices, data in zip(loader_indices, data_loader):
-        model.module.infer_task = 1
+        model.module.infer_task = args.target_task
+        model.module.num_aux = args.num_aux
         with torch.no_grad():
             result = model(return_loss=False, **data)
         batch_size = len(result)
