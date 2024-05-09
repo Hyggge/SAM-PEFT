@@ -84,8 +84,7 @@ def main():
         img = Image.fromarray(np.uint8(result[0]))
         img = img.convert("L")
         filename = data["img_metas"][0].data[0][0]["ori_filename"][:-4]
-        img.save(os.path.join(args.out_dir, filename + ".jpg"))
-       
+        img.save(os.path.join(args.out_dir, filename + ".png"))
 
 if __name__ == '__main__':
     main()
