@@ -44,6 +44,9 @@ def main():
     cfg.model.type = "EncoderDecoderMultiHeadV2Infer"
     assert cfg.model.decode_head.type == 'UPerHeadV2', 'Only support UPerHeadV2 decode head'
     cfg.model.decode_head.type = "UPerHeadV2Infer"
+    # build out dir
+    if not os.path.exists(args.out_dir):
+        os.makedirs(args.out_dir)
     # build dataset
     dataset = build_dataset(cfg.data.test)
     data_loader = build_dataloader(
