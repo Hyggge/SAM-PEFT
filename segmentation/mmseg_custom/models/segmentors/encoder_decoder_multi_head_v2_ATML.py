@@ -184,11 +184,15 @@ class EncoderDecoderMultiHeadV2ATML(BaseSegmentor):
 
         loss_ce = []
         acc_seg = []
+        losses_atml = dict()
+
         for loss_name, loss_value in losses.items():
             if 'loss_ce' in loss_name:
                 loss_ce.append(loss_value)
+                losses_atml[loss_name.replace("loss", "ls")] = loss_value
             if 'acc_seg' in loss_name:
                 acc_seg.append(loss_value)
+                losses_atml[loss_name] = loss_value
 
         weight = torch.stack(acc_seg)
         weight = (1 - weight / 100) + 0.01
@@ -196,11 +200,10 @@ class EncoderDecoderMultiHeadV2ATML(BaseSegmentor):
         loss = torch.stack(loss_ce)
         loss_geo = torch.exp(torch.sum(weight * torch.log(loss)))
 
-        losses_atml = dict()
         losses_atml['loss_geo'] = loss_geo
-        losses_atml['drivable_acc_seg'] = acc_seg[0]
 
         return losses_atml
+
 
     # TODO refactor
     def slide_inference(self, img, img_meta, rescale):
