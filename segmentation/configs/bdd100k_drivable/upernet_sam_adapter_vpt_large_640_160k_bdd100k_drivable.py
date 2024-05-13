@@ -38,9 +38,9 @@ img_norm_cfg = dict(
     mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
 
 
-optimizer = dict(_delete_=True, type='AdamW', lr=6e-5, betas=(0.9, 0.999), weight_decay=0.01,
+optimizer = dict(_delete_=True, type='AdamW', lr=1e-4, betas=(0.9, 0.999), weight_decay=0.05,
                  constructor='LayerDecayOptimizerConstructor',
-                 paramwise_cfg=dict(num_layers=12, layer_decay_rate=0.95))
+                 paramwise_cfg=dict(num_layers=24, layer_decay_rate=0.90))
 lr_config = dict(_delete_=True, 
                  policy='poly',
                  warmup='linear',
