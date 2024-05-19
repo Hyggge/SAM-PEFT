@@ -15,6 +15,7 @@ model = dict(
         encoder_depth=24,
         encoder_num_heads=16,
         encoder_global_attn_indexes=[5, 11, 17, 23],
+        frozen=True,
         # Adapter Parameters
         conv_inplane=64,
         n_points=4,
