@@ -20,7 +20,7 @@ model = dict(
         adaptformer_layernorm_option="none",
         adaptformer_init_option="lora",
         adaptformer_scalar="0.1",
-        adaptformer_bottleneck=64,
+        adaptformer_bottleneck=256,
         adaptformer_dropout=0.1
         ),
     decode_head=dict(num_classes=150, in_channels=[1024, 1024, 1024, 1024]),
