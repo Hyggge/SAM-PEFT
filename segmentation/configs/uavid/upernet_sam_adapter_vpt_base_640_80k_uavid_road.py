@@ -1,6 +1,6 @@
 # Copyright (c) Hyggge. All rights reserved.
 _base_ = [
-    '../_base_/models/upernet_r50.py', '../_base_/datasets/uavid.py',
+    '../_base_/models/upernet_r50.py', '../_base_/datasets/uavid_road.py',
     '../_base_/default_runtime.py', '../_base_/schedules/schedule_80k.py'
 ]
 # pretrained = 'https://dl.fbaipublicfiles.com/deit/deit_base_patch16_224-b5f2ef4d.pth'

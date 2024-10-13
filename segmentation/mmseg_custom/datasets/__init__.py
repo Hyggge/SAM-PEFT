@@ -5,4 +5,5 @@ from .cityscapes_road import CityscapesRoadDataset # noqa: F401,F403
 from .bdd100k_drivable import BDD100kDrivableDataset # noqa: F401,F403
 from .bdd100k_sem_seg import BDD100kSemSegDataset
 from .uavid_road import UAViDRoadDataset
+from .uavid import UAViDDataset
 from .pipelines import *  # noqa: F401,F403

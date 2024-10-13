@@ -5,8 +5,7 @@ img_norm_cfg = dict(
     mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
 crop_size = (640, 384)
 train_pipeline = [
-    dict(type='LoadImageFromFile'),
-    dict(type='LoadAnnotations'),
+    dict(type='RandomMosaic', prob=0.5, img_scale=(384, 640), center_ratio_range=(0.7, 1.3)),
     dict(type='Resize', img_scale=(640, 384), keep_ratio=False),
     dict(type='RandomCrop', crop_size=(640, 384), cat_max_ratio=0.75),
     dict(type='RandomFlip', prob=0.5),
@@ -35,20 +34,25 @@ data = dict(
     samples_per_gpu=2,
     workers_per_gpu=2,
     train=dict(
-        type=dataset_type,
-        data_root=data_root,
-        img_dir='train/Images/',
-        ann_dir='train/TrainId/',
+        type='MultiImageMixDataset',
+        dataset=dict(
+            type=dataset_type,
+            data_root=data_root,
+            img_dir='train/Images/',
+            ann_dir='train/TrainId_Road/',
+            pipeline=[
+                dict(type='LoadImageFromFile'),
+                dict(type='LoadAnnotations')]),
         pipeline=train_pipeline),
     val=dict(
         type=dataset_type,
         data_root=data_root,
         img_dir='val/Images/',
-        ann_dir='val/TrainId/',
+        ann_dir='val/TrainId_Road/',
         pipeline=test_pipeline),
     test=dict(
         type=dataset_type,
         data_root=data_root,
         img_dir='val/Images/',
-        ann_dir='val/TrainId/',
+        ann_dir='val/TrainId_Road/',
         pipeline=test_pipeline))
